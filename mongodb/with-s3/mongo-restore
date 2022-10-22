@@ -1,0 +1,13 @@
+#!/bin/bash
+
+DOWNLOAD_PATH="/tmp/$(openssl rand -hex 20)/$4"
+MONGORESTORE_PATH="/usr/bin/mongorestore"
+
+mkdir -p $(dirname "$DOWNLOAD_PATH")
+aws s3api get-object --bucket $3 --key $4 $DOWNLOAD_PATH
+tar -xf $DOWNLOAD_PATH -C $(dirname "$DOWNLOAD_PATH")
+$MONGORESTORE_PATH -u $1 -p $2 --authenticationDatabase="admin" $(dirname "$DOWNLOAD_PATH")/dump
+rm -rf $(dirname "$DOWNLOAD_PATH")
+
+## Command Template
+#./mongo-restore <MongoDB Username> <MongoDB Password> <Restore - S3 Bucket | ex - staging--db-back> <Restore - S3 Bucket path | ex - backups/mongodb/mongodb-ip-172-31-88-96-2022-10-22-1253.tar>  

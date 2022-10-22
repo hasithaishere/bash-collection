@@ -1,0 +1,31 @@
+#!/bin/bash
+#Backfile Identifier (Optional | Ex Value - "-FORCED")
+BACKUP_TYPE_IDENTIFIER=$5
+ 
+#Force file syncronization and lock writes
+mongo admin  -u $1 -p $2 --eval "printjson(db.fsyncLock())"
+ 
+MONGODUMP_PATH="/usr/bin/mongodump"
+MONGO_DATABASE=$3
+ 
+TIMESTAMP=`date +%F-%H%M`
+S3_BUCKET_NAME=$4
+S3_BUCKET_PATH="backups/mongodb"
+ 
+# Create backup
+$MONGODUMP_PATH -u $1 -p $2 --authenticationDatabase admin -d $MONGO_DATABASE
+ 
+# Add timestamp to backup
+tar cf mongodb-$HOSTNAME-$TIMESTAMP.tar dump
+ 
+# Upload to S3
+aws s3api put-object --bucket "$S3_BUCKET_NAME" --key "$S3_BUCKET_PATH/mongodb-$HOSTNAME-$TIMESTAMP$BACKUP_TYPE_IDENTIFIER.tar" --body mongodb-$HOSTNAME-$TIMESTAMP.tar
+ 
+#Unlock database writes
+mongo admin -u $1 -p $2 --eval "printjson(db.fsyncUnlock())"
+
+#Delete local temporary files and folders
+rm -rf mongodb-* && rm -rf dump
+
+## Command Template
+#./mongo-backup <MongoDB Username> <MongoDB Password> <MongoDB Database Name> <Restore - S3 Bucket | ex - staging--db-back>
