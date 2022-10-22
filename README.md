@@ -1,2 +1,2 @@
-# bash-collection
-zap Delightful Bash Scripts and resources
+# Bash Collection
+⚡ Delightful Bash Scripts and resources
